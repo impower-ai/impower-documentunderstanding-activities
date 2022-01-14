@@ -1,0 +1,42 @@
+name: 1.$(Build.BuildId).$(Rev:rr)
+
+resources:
+  repositories:
+  - repository: ci
+    type: git
+    name: Impower.Support.Pipelines
+    trigger: none
+  - repository: impower
+    type: github
+    name: impower-ai/uipath-ado-templates
+    endpoint: GithubConnection
+    trigger: none
+  - repository: target
+    type: github
+    name: impower-ai/impower-documentunderstanding-activities
+    endpoint: GithubConnection
+    trigger:
+      branches:
+        include: 
+        - main
+        - test
+
+pool:
+   vmImage: windows-latest
+
+stages:
+- template: /templates/csharp-template.yaml@impower
+  parameters:
+    folder : 'Shared'
+    uipath_environment: 'UiPath-Development'
+    stage_name: 'Development'
+    deploy_environment: 'Impower-Development'
+- template: /templates/publish_to_nugetorg.yaml@impower
+  parameters:
+    artifact_directory: 'CSharp Package'
+    service_connection: 'ImpowerAiNuget'
+    azure_environment: 'NugetOrg'
+    stage_name: 'Deploy_To_Impower_Nuget_Feed'
+    stage_dependencies:
+    - 'Development'
+    main_only: true
