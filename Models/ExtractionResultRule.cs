@@ -52,7 +52,7 @@ namespace Impower.DocumentUnderstanding.Models
         public ExtractionResultThreshold(ExtractionResult extractionResult, JObject ruleDefinition) : base(extractionResult,ruleDefinition)
         {
             this.threshold = ruleDefinition["Threshold"].ToObject<decimal>();
-            this.confidenceType = (ConfidenceType)Enum.Parse(typeof(ConfidenceType), ruleDefinition["FailureLevel"].ToString())
+            this.confidenceType = (ConfidenceType)Enum.Parse(typeof(ConfidenceType), ruleDefinition["FailureLevel"].ToString());
             
         }
         internal override ExtractionResultEvaluation EvaluateRule()
