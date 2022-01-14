@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="NReco.LambdaParser" Version="1.0.12" />
     <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.11.0" />
   </ItemGroup>
 

@@ -16,7 +16,7 @@ namespace Impower.DocumentUnderstanding.Models
             return DocumentTaxonomy.Deserialize(documentTaxonomy.Serialize());
         }
     }
-    [DisplayName("Filter Taxonomy By Field Ids")]
+    [DisplayName("Filter Taxonomy By Field ID's")]
     public class FilterTaxonomyByFieldIds : CodeActivity
     {
         [Category("Input")]
@@ -26,7 +26,7 @@ namespace Impower.DocumentUnderstanding.Models
         public InArgument<DocumentTaxonomy> InputTaxonomy { get; set; }
 
         [Category("Input")]
-        [DisplayName("Field IDs")]
+        [DisplayName("Field ID's")]
         [Description("List of fields to filter on.")]
         [RequiredArgument]
         public InArgument<IEnumerable<string>> Fields { get; set; }

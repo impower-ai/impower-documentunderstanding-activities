@@ -6,9 +6,43 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UiPath.DocumentProcessing.Contracts.Results;
+using Newtonsoft.Json.Linq;
+using NReco.Linq;
+using UiPath.DocumentProcessing.Contracts.Taxonomy;
 
 namespace Impower.DocumentUnderstanding.Models
 {
+    internal static class ExtractionResultExtensions
+    {
+        internal static object GetDataPointValue(ResultsDataPoint dataPoint)
+        {
+            var value = dataPoint.Values[0].Value;
+            switch (dataPoint.FieldType)
+            {
+                case FieldType.Date:
+                    return DateTime.Parse(value).Date;
+                case FieldType.Number:
+                    return decimal.Parse(value);
+                default:
+                    return value;
+            }
+        }
+    }
+    [DisplayName("Run Rule On Extraction Result")]
+    public class RunRuleOnExtractionResult : CodeActivity
+    {
+        [Category("Input")]
+        [DisplayName("Rule")]
+        public InArgument<ExtractionResultRule> Rule { get; set; }
+        [Category("Output")]
+        [DisplayName("Valid?")]
+        public InArgument<bool> Valid { get; set; }
+        protected override void Execute(CodeActivityContext context)
+        {
+
+        }
+    }
+
     [DisplayName("Merge Extraction Results")]
     public class MergeExtractionResults : CodeActivity
     {
