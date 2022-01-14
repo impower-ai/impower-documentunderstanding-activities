@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <PackageId>Impower.DocumentUnderstanding.Activities</PackageId>
+    <Company>Impower.AI</Company>
+    <PackageIcon>logo.jpg</PackageIcon>
+    <PackageIconUrl />
+    <PackageTags>uipath document understanding taxonomy extraction json</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.11.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="logo.jpg">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Activities" />
+  </ItemGroup>
+
+</Project>
