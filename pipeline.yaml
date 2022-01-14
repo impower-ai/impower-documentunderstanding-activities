@@ -17,6 +17,7 @@ resources:
     type: github
     name: impower-ai/impower-documentunderstanding-activities
     endpoint: GithubConnection
+    ref: $[ resources.repositories['self'].ref ]
     trigger:
       branches:
         include: 
