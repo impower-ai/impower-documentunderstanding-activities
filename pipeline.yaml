@@ -1,6 +1,8 @@
 name: 1.$(Build.BuildId).$(Rev:rr)
 pr:
 - main
+trigger:
+- main
 
 resources:
   repositories:
@@ -13,15 +15,6 @@ resources:
     name: impower-ai/uipath-ado-templates
     endpoint: GithubConnection
     trigger: none
-  - repository: target
-    type: github
-    name: impower-ai/impower-documentunderstanding-activities
-    endpoint: GithubConnection
-    ref: ${{ resources.repositories['self'].ref }}
-    trigger:
-      branches:
-        include: 
-        - main
 
 pool:
    vmImage: windows-latest
@@ -33,6 +26,7 @@ stages:
     uipath_environment: 'UiPath-Development'
     stage_name: 'Development'
     deploy_environment: 'Impower-Development'
+    target_resource_name: 'self'
 - template: /templates/publish_to_nugetorg.yaml@impower
   parameters:
     artifact_directory: 'CSharp Package'
