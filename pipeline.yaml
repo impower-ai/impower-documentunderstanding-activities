@@ -1,4 +1,6 @@
 name: 1.$(Build.BuildId).$(Rev:rr)
+pr:
+- main
 
 resources:
   repositories:
@@ -19,7 +21,6 @@ resources:
       branches:
         include: 
         - main
-        - test
 
 pool:
    vmImage: windows-latest
