@@ -20,6 +20,7 @@ namespace Impower.DocumentUnderstanding.Tests
         [SetUp]
         public void Setup()
         {
+            //TODO: Is there a simpler way to do this test data creation? store test object serialized?
             documentTypeId = "TestGroup.TestCategory.TestDocument";
             inputTaxonomy = new DocumentTaxonomy
             {

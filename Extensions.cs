@@ -60,6 +60,7 @@ namespace Impower.DocumentUnderstanding.Extensions
     {
         internal static DocumentTaxonomy CopyTaxonomy(DocumentTaxonomy documentTaxonomy)
         {
+            //TODO: Investigate if there is any better way to do this
             return DocumentTaxonomy.Deserialize(documentTaxonomy.Serialize());
         }
     }
