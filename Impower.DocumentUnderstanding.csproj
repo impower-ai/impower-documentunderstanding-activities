@@ -7,7 +7,12 @@
     <PackageIcon>logo.jpg</PackageIcon>
     <PackageIconUrl />
     <PackageTags>uipath document understanding taxonomy extraction json</PackageTags>
+<<<<<<< Updated upstream
     <Version>1.0.1</Version>
+=======
+    <Version>1.0.2</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+>>>>>>> Stashed changes
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +29,12 @@
 
   <ItemGroup>
     <Reference Include="System.Activities" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="ExtractionResultThresholdSchema.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
