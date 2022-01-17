@@ -118,6 +118,11 @@ namespace Impower.DocumentUnderstanding
         protected override void Execute(CodeActivityContext context)
         {
             ExtractionResult resultToCopyTo = ResultToCopyTo.Get(context);
+            ExtractionResult resultToCopyFrom = ResultToCopyFrom.Get(context);
+            if(resultToCopyFrom.DocumentId != resultToCopyTo.DocumentId)
+            {
+                throw new System.Exception("DocumentId's do not match - indicating these ExtractionResults are not from the same document");
+            }
 
             var dataPointDictionary = resultToCopyTo.ResultsDocument.Fields.ToDictionary(
                 field => field.FieldId,

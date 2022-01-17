@@ -7,16 +7,14 @@
     <PackageIcon>logo.jpg</PackageIcon>
     <PackageIconUrl />
     <PackageTags>uipath document understanding taxonomy extraction json</PackageTags>
-<<<<<<< Updated upstream
-    <Version>1.0.1</Version>
-=======
     <Version>1.0.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
->>>>>>> Stashed changes
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NReco.LambdaParser" Version="1.0.12" />
+    <PackageReference Include="NUnit" Version="3.13.2" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.2.0" />
     <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.11.0" />
   </ItemGroup>
 
@@ -29,12 +27,6 @@
 
   <ItemGroup>
     <Reference Include="System.Activities" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="ExtractionResultThresholdSchema.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
