@@ -15,6 +15,7 @@
     <PackageReference Include="NReco.LambdaParser" Version="1.0.12" />
     <PackageReference Include="NUnit" Version="3.13.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.2.0" />
+    <PackageReference Include="Polly" Version="7.2.3" />
     <PackageReference Include="UiPath.DocumentProcessing.Contracts" Version="1.11.0" />
   </ItemGroup>
 
@@ -27,6 +28,7 @@
 
   <ItemGroup>
     <Reference Include="System.Activities" />
+    <Reference Include="System.Web" />
   </ItemGroup>
 
 </Project>
