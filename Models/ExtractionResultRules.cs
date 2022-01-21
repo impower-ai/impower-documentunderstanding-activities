@@ -9,7 +9,6 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
 {
     public abstract class RuleDefinition
     {
-        public string[] RelevantFields;
         public string DocumentTypeID;
         public FailureLevel FailureLevel;
 
