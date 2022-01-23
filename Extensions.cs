@@ -1,5 +1,6 @@
 ﻿using Impower.DocumentUnderstanding.Models.ExtractionResults;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -46,13 +47,32 @@ namespace Impower.DocumentUnderstanding.Extensions
                 ruleInstance => ruleInstance.ResultMessage()
             );
         }
-
-        public static IEnumerable<RuleDefinition> ParseRuleDefinitions(string filePath)
+        public static IEnumerable<RuleDefinition> DeserializeRuleDefinitionsFromString(string jsonString)
         {
-            JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
+            //TODO: In massive need of refactor, this implementation is just the easiest way I could think to do it under time-constraints.
+            //These few lines reduces the need to use the full name in rule definition json files.
+            var types = new[] { typeof(LambdaRuleDefinition), typeof(ThresholdRuleDefinition) };
+            foreach(Type type in types)
+            {
+                jsonString = jsonString.Replace(
+                    $"\"{type.Name}\"",
+                    $"\"{type.FullName}, {type.Assembly}\""
+                );
+            }
+
+            JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+            return JsonConvert.DeserializeObject<IEnumerable<RuleDefinition>>(jsonString, settings);
+        }
+        public static IEnumerable<RuleDefinition> DeserializeRuleDefinitions(string filePath)
+        {
             if (!File.Exists(filePath)) throw new Exception($"Could not locate a file at '{filePath}'");
             string ruleDefinitionsContents = File.ReadAllText(filePath);
-            return JsonConvert.DeserializeObject<IEnumerable<RuleDefinition>>(ruleDefinitionsContents, settings);
+            return DeserializeRuleDefinitionsFromString(ruleDefinitionsContents);
+        }
+        public static void SerializeRuleDefinitions(string filePath, IEnumerable<RuleDefinition> rules)
+        {
+            JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects };
+            File.WriteAllText(filePath,JsonConvert.SerializeObject(rules, settings));
         }
     }
 

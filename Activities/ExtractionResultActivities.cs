@@ -86,15 +86,16 @@ namespace Impower.DocumentUnderstanding.Rules
     {
         [Category("Input")]
         [DisplayName("File Path")]
+        [RequiredArgument]
         public InArgument<string> FilePath { get; set; }
-
+        [RequiredArgument]
         [Category("Output")]
         [DisplayName("Rules")]
         public OutArgument<IEnumerable<RuleDefinition>> Rules { get; set; }
 
         protected override void Execute(CodeActivityContext context)
         {
-            var rules = ExtractionResultRuleExtensions.ParseRuleDefinitions(FilePath.Get(context));
+            var rules = ExtractionResultRuleExtensions.DeserializeRuleDefinitions(FilePath.Get(context));
             Rules.Set(context, rules);
         }
     }
