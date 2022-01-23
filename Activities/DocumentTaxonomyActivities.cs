@@ -1,21 +1,12 @@
-﻿using System;
+﻿using Impower.DocumentUnderstanding.Extensions;
 using System.Activities;
-using System.ComponentModel;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UiPath.DocumentProcessing.Contracts.Taxonomy;
 
-namespace Impower.DocumentUnderstanding.Models
+namespace Impower.DocumentUnderstanding
 {
-    internal static class TaxonomyExtensions
-    {
-        internal static DocumentTaxonomy CopyTaxonomy(DocumentTaxonomy documentTaxonomy)
-        {
-            return DocumentTaxonomy.Deserialize(documentTaxonomy.Serialize());
-        }
-    }
     [DisplayName("Filter Taxonomy By Field ID's")]
     public class FilterTaxonomyByFieldIds : CodeActivity
     {
@@ -43,17 +34,16 @@ namespace Impower.DocumentUnderstanding.Models
             var workingTaxonomy = TaxonomyExtensions.CopyTaxonomy(InputTaxonomy.Get(context));
             var documentTypes = workingTaxonomy.DocumentTypes;
             
-            foreach(DocumentType documentType in documentTypes)
+            //TODO: Cleanup this for-loop and the subsequent LINQ expression. one liner?
+            foreach (DocumentType documentType in documentTypes)
             {
                 documentType.Fields = documentType.Fields.Where(
                     field => filterFields.Contains(field.FieldId)
                 ).ToArray();
             }
-
             workingTaxonomy.DocumentTypes = documentTypes.Where(
                 documentType => documentType.Fields.Length > 0
             ).ToArray();
-
             FilteredTaxonomy.Set(context, workingTaxonomy);
         }
     }
