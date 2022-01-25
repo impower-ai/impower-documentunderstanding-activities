@@ -1,8 +1,13 @@
 ﻿using Impower.DocumentUnderstanding.Extensions;
+using Impower.DocumentUnderstanding.Rules;
+using Impower.DocumentUnderstanding.Validation;
+using Newtonsoft.Json;
 using NReco.Linq;
 using System;
+using System.Activities;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.Serialization;
 using UiPath.DocumentProcessing.Contracts.Results;
 
 namespace Impower.DocumentUnderstanding.Models.ExtractionResults
@@ -14,7 +19,14 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
 
         public abstract RuleInstance GetRuleInstance(ExtractionResult extractionResult);
     }
-
+    public class VinValidationRuleDefinition : RuleDefinition
+    {
+        public string[] Fields;
+        public override RuleInstance GetRuleInstance(ExtractionResult extractionResult)
+        {
+            return new VinValidationRuleInstance(extractionResult, this);
+        }
+    }
     public class ThresholdRuleDefinition : RuleDefinition
     {
         public string[] Fields;
@@ -61,12 +73,79 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
             return this.Evaluation;
         }
 
-        internal FailureLevel GetEvaluatedFailureLevel()
+        public FailureLevel GetEvaluatedFailureLevel()
         {
             return this.GetEvaluation().FailureLevel;
         }
     }
-
+    public class VinValidationRuleInstance : RuleInstance
+    {
+        private List<string> FailedFields = new List<string>();
+        internal new VinValidationRuleDefinition RuleDefinition;
+        public VinValidationRuleInstance(ExtractionResult extractionResult, VinValidationRuleDefinition ruleDefinition)
+        {
+            this.ExtractionResult = extractionResult;
+            this.RuleDefinition = ruleDefinition;
+        }
+        public override string ResultMessage()
+        {
+            if (this.Evaluation is null)
+            {
+                this.EvaluateRule();
+            }
+            return String.Format(
+                "[{0}] {1} following fields ({2}) had an invalid VIN number",
+                this.RuleDefinition.DocumentTypeID,
+                FailedFields.Any() ? "The" : "None of the",
+                String.Join(",", FailedFields.Any() ? FailedFields.ToArray() : this.RuleDefinition.Fields)
+            );
+        }
+        public override string[] GetFailedFields()
+        {
+            if(this.Evaluation is null)
+            {
+                this.EvaluateRule();
+            }
+            return this.FailedFields.ToArray();
+        }
+        public override string[] GetFields()
+        {
+            return this.RuleDefinition.Fields;
+        }
+        public override string RuleExplanation()
+        {
+            return String.Format(
+                "[{0}] Determines if any of these fields ({1}) have an invalid VIN number",
+                this.RuleDefinition.DocumentTypeID,
+                String.Join(",", this.RuleDefinition.Fields)
+            );
+        }
+        internal override void EvaluateRule()
+        {
+            FixVinNumber activity = new FixVinNumber();
+            foreach(string fieldID in this.RuleDefinition.Fields)
+            {
+                string fullFieldId = this.RuleDefinition.DocumentTypeID + "." + fieldID;
+                var result = WorkflowInvoker.Invoke(activity, new Dictionary<string, object>
+                {
+                    ["ExtractionResult"] = this.ExtractionResult,
+                    ["FieldId"] = fullFieldId
+                });
+                if (!(Boolean)result["Valid"])
+                {
+                    this.FailedFields.Add(fullFieldId);
+                }
+            }
+            if (this.FailedFields.Any())
+            {
+                this.Evaluation = new RuleInstanceEvaluation(this.RuleDefinition.FailureLevel, this);
+            }
+            else
+            {
+                this.Evaluation = new RuleInstanceEvaluation(FailureLevel.None, this);
+            }
+        }
+    }
     public class ThresholdRuleInstance : RuleInstance
     {
         internal new ThresholdRuleDefinition RuleDefinition;
@@ -94,9 +173,9 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
             if (this.Evaluation is null) this.EvaluateRule();
             return String.Format(
                 "[{0}] {1} following fields ({2}) had an OcrConfidence below {3} or a Confidence below {4}.",
-                FailedFields.Any() ? "The" : "None of the",
                 this.RuleDefinition.DocumentTypeID,
-                String.Join(",", this.RuleDefinition.Fields),
+                FailedFields.Any() ? "The" : "None of the",
+                String.Join(",", FailedFields.Any() ? FailedFields.ToArray() : this.RuleDefinition.Fields),
                 this.RuleDefinition.OcrThreshold.ToString("n2"),
                 this.RuleDefinition.DuThreshold.ToString("n2")
             );
@@ -141,6 +220,7 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
 
     public class LambdaRuleInstance : RuleInstance
     {
+        private Dictionary<string, object> lambdaContext;
         internal new LambdaRuleDefinition RuleDefinition;
         internal static LambdaParser Parser = new LambdaParser();
         internal Nullable<bool> LambdaResult;
@@ -182,22 +262,24 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
         {
             if (!this.LambdaResult.HasValue) this.EvaluateRule();
             return String.Format(
-                "[{0}] The following expression evaluated \"{1}\" to {2}",
+                "[{0}] The following expression: \"{1}\" evaluated to {2} with inputs of {3}",
                 this.RuleDefinition.DocumentTypeID,
                 this.RuleDefinition.Expression,
-                this.LambdaResult.Value
+                this.LambdaResult.Value,
+                JsonConvert.SerializeObject(this.lambdaContext)
             );
         }
 
         internal override void EvaluateRule()
         {
-            var lambdaContext = new Dictionary<string, object>();
+            lambdaContext = new Dictionary<string, object>();
             foreach (KeyValuePair<string, string> reference in this.RuleDefinition.Fields)
             {
-                ResultsDataPoint value = this.ExtractionResult.ResultsDocument.Fields.Where(
-                    field => field.FieldId == reference.Value
-                ).Single();
-                lambdaContext[reference.Key] = ExtractionResultRuleExtensions.GetDataPointValue(value);
+                ResultsDataPoint data = ExtractionResultRuleExtensions.GetDataPointByFieldId(
+                    $"{this.RuleDefinition.DocumentTypeID}.{reference.Value}",
+                    this.ExtractionResult
+                );
+                lambdaContext[reference.Key] = ExtractionResultRuleExtensions.GetDataPointValue(data);
             }
             this.LambdaResult = (bool)Parser.Eval(this.RuleDefinition.Expression, lambdaContext);
             this.Evaluation = new RuleInstanceEvaluation(
@@ -219,13 +301,22 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
         }
     }
 
+    [Serializable]
     public class InvalidRuleException : Exception
     {
+        public InvalidRuleException()
+        {
+        }
+
         public InvalidRuleException(string message) : base(message)
         {
         }
 
         public InvalidRuleException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected InvalidRuleException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
         }
     }

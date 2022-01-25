@@ -21,6 +21,7 @@ namespace Impower.DocumentUnderstanding.Validation
 
     internal static class ValidationExtensions
     {
+        private static Regex vinRegex = new Regex(@"[^A-HJ-NPR-Za-hj-npr-z\d]");
         public static readonly string[] VinQueryFilter = {
                 "Error Code",
                 "Error Text",
@@ -53,10 +54,18 @@ namespace Impower.DocumentUnderstanding.Validation
                 return JObject.Parse(streamReader.ReadToEnd());
             }
         }
-
-        public static bool ValidateVinWithNHTSA(string vin, out Dictionary<string, string> properties)
+        public static bool ValidateVin(string vin)
         {
-            if(vin.Length != 17) {
+            return ValidateVinWithNHTSA(ref vin, out _, false);
+        }
+        public static bool ValidateVinWithNHTSA(ref string vin, out Dictionary<string, string> properties, bool fixOcr = false)
+        {
+            if (fixOcr)
+            {
+                vin = vin.Replace("I", "1").Replace("O", "0").Replace("Q", "9");
+            }
+            vin = vinRegex.Replace(vin, String.Empty);
+            if (vin.Length != 17) {
                 properties = null;
                 return false;
             }
@@ -77,7 +86,6 @@ namespace Impower.DocumentUnderstanding.Validation
     [DisplayName("Validate And Clean VIN")]
     public class ValidateAndCleanVIN : CodeActivity
     {
-        private readonly Regex vinRegex = new Regex(@"[^A-HJ-NPR-Za-hj-npr-z\d]");
 
         [Category("Input")]
         [DisplayName("VIN Number")]
@@ -103,13 +111,8 @@ namespace Impower.DocumentUnderstanding.Validation
         {
             Dictionary<string, string> properties;
             string sanitizedVin = VIN.Get(context).ToUpper();
-            Console.WriteLine($"Sanitized VIN: '{sanitizedVin}'");
-            if (FixOCR.Get(context))
-            {
-                sanitizedVin = sanitizedVin.Replace("I", "1").Replace("O", "0").Replace("Q", "9");
-            }
-            sanitizedVin = vinRegex.Replace(sanitizedVin, String.Empty);
-            bool valid = ValidationExtensions.ValidateVinWithNHTSA(sanitizedVin, out properties);
+            bool fixOcr = FixOCR.Get(context);
+            bool valid = ValidationExtensions.ValidateVinWithNHTSA( ref sanitizedVin, out properties, fixOcr);
             VIN.Set(context, sanitizedVin);
             Properties.Set(context, properties);
             Valid.Set(context, valid);

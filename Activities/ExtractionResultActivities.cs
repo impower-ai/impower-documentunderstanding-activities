@@ -1,5 +1,6 @@
 ﻿using Impower.DocumentUnderstanding.Extensions;
 using Impower.DocumentUnderstanding.Models.ExtractionResults;
+using Impower.DocumentUnderstanding.Validation;
 using System.Activities;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -8,6 +9,37 @@ using UiPath.DocumentProcessing.Contracts.Results;
 
 namespace Impower.DocumentUnderstanding.Rules
 {
+    [DisplayName("Fix And Validate VIN Number")]
+    public class FixVinNumber : CodeActivity
+    {
+        [DisplayName("Extraction Result")]
+        [RequiredArgument]
+        [Category("Input")]
+        public InOutArgument<ExtractionResult> ExtractionResult { get; set; }
+
+        [DisplayName("VIN Field")]
+        [RequiredArgument]
+        [Category("Input")]
+        public InArgument<string> FieldId { get; set; }
+
+        [DisplayName("Valid?")]
+        [Category("Output")]
+        public OutArgument<bool> Valid { get; set; }
+        protected override void Execute(CodeActivityContext context)
+        {
+            ExtractionResult result = ExtractionResult.Get(context);
+            var fieldId = FieldId.Get(context);
+            var dataPoint = ExtractionResultRuleExtensions.GetDataPointByFieldId(fieldId, result);
+            var vin = ExtractionResultRuleExtensions.GetDataPointValue(dataPoint) as string;
+            var valid = ValidationExtensions.ValidateVinWithNHTSA(ref vin, out Dictionary<string, string> properties, true);
+            if (valid)
+            {
+                ExtractionResultRuleExtensions.UpdateDataPointValue(vin, fieldId, result);
+            }
+            Valid.Set(context, valid);
+            ExtractionResult.Set(context, result);
+        }
+    }
     [DisplayName("Run Rule Set On Extraction Result")]
     public class RunRulesOnExtractionResult : CodeActivity
     {
@@ -19,11 +51,11 @@ namespace Impower.DocumentUnderstanding.Rules
         [RequiredArgument]
         [Category("Input")]
         [DisplayName("Extraction Result")]
-        public InArgument<ExtractionResult> ExtractionResult { get; set; }
+        public InOutArgument<ExtractionResult> ExtractionResult { get; set; }
 
         [Category("Output")]
         [DisplayName("Failed Fields")]
-        public OutArgument<string[]> FailedFields { get; set; }
+        public OutArgument<IEnumerable<string>> FailedFields { get; set; }
 
         [Category("Output")]
         [DisplayName("Rule Instances")]
@@ -43,9 +75,14 @@ namespace Impower.DocumentUnderstanding.Rules
             var ruleInstanceEvaluations = ruleInstances.Select(
                 ruleInstance => ruleInstance.Evaluation
             );
+            foreach(RuleInstance rule in ruleInstances)
+            {
+                rule.EvaluateRule();
+            }
             Messages.Set(context, ruleInstances.Select(instance => instance.ResultMessage()));
-            FailedFields.Set(context, ruleInstances.SelectMany(instance => instance.GetFailedFields()));
+            FailedFields.Set(context, ruleInstances.SelectMany(instance => instance.GetFailedFields()).Distinct());
             RuleInstances.Set(context, ruleInstances);
+            ExtractionResult.Set(context, extractionResult);
         }
     }
 
@@ -60,7 +97,7 @@ namespace Impower.DocumentUnderstanding.Rules
         [RequiredArgument]
         [Category("Input")]
         [DisplayName("Extraction Result")]
-        public InArgument<ExtractionResult> ExtractionResult { get; set; }
+        public InOutArgument<ExtractionResult> ExtractionResult { get; set; }
 
         [Category("Output")]
         [DisplayName("Failure Level")]
@@ -78,9 +115,9 @@ namespace Impower.DocumentUnderstanding.Rules
             var ruleInstanceEvaluation = ruleInstance.Evaluation;
             RuleInstance.Set(context, ruleInstance);
             FailureLevel.Set(context, ruleInstanceEvaluation.FailureLevel);
+            ExtractionResult.Set(context, extractionResult);
         }
     }
-
     [DisplayName("Load Rules From File")]
     public class LoadRulesFromFile : CodeActivity
     {

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UiPath.DocumentProcessing.Contracts.Results;
 using UiPath.DocumentProcessing.Contracts.Taxonomy;
 
@@ -12,27 +13,76 @@ namespace Impower.DocumentUnderstanding.Extensions
 {
     public static class ExtractionResultRuleExtensions
     {
+        public static ResultsDataPoint GetDataPointByFieldId(string fieldId, ExtractionResult result)
+        {
+            var values = result.ResultsDocument.Fields.Where(
+                field => field.FieldId == fieldId
+            );
+            if(values.Count() == 1)
+            {
+                return values.Single();
+            }
+            else
+            {
+                throw new InvalidRuleException($"Could not find field '{fieldId}' in extraction result.");
+            }
+        }
+        private static string DecimalRegexString = @"[^0-9.]";
+        public static void UpdateDataPointValue(string value, string fieldId, ExtractionResult result)
+        {
+            var matchingField = result.ResultsDocument.Fields.Where(field => field.FieldId == fieldId).Single();
+            var dataPoint = GetDataPointByFieldId(fieldId, result);
+            if (dataPoint.Values.Any())
+            {
+                var referenceValue = dataPoint.Values.First();
+                referenceValue.Value = value;
+                matchingField.Values = new[] { referenceValue };
+            }
+            else
+            {
+                //TODO: should i even be handling this?
+                var resultReference = new ResultsContentReference();
+                var referenceValue = new ResultsValue(value,resultReference, 1, 1);
+                matchingField.Values = new[] { referenceValue };
+            }
+        }
         public static object GetDataPointValue(ResultsDataPoint dataPoint)
         {
             var value = dataPoint.Values[0].Value;
-            switch (dataPoint.FieldType)
+            try
             {
-                case FieldType.Date:
-                    return DateTime.Parse(value).Date;
+                switch (dataPoint.FieldType)
+                {
+                    case FieldType.Date:
+                        return DateTime.Parse(value).Date;
 
-                case FieldType.Number:
-                    return decimal.Parse(value);
+                    case FieldType.Number:
+                        return decimal.Parse(
+                            Regex.Replace(value, DecimalRegexString, String.Empty));
 
-                default:
-                    return value;
+                    default:
+                        return value;
+                }
+            }catch(FormatException exception)
+            {
+                throw new Exception($"Could not parse '{value}' as type '{dataPoint.FieldType}'", exception);
             }
         }
-
-        public static IEnumerable<string> GetFailedFields(IEnumerable<RuleInstance> ruleInstances, FailureLevel failureLevel)
+        public static IEnumerable<RuleInstance> GetFailedInstances(IEnumerable<RuleInstance> ruleInstances, FailureLevel failureLevel)
         {
             return ruleInstances.Where(
                 ruleInstance => ruleInstance.GetEvaluatedFailureLevel() >= failureLevel
-            ).SelectMany(
+            );
+        }
+        public static IEnumerable<string> GetFailedMessages(IEnumerable<RuleInstance> ruleInstances, FailureLevel failureLevel)
+        {
+            return GetFailedInstances(ruleInstances, failureLevel).Select(
+                ruleInstance => ruleInstance.ResultMessage()
+            );
+        }
+        public static IEnumerable<string> GetFailedFields(IEnumerable<RuleInstance> ruleInstances, FailureLevel failureLevel)
+        {
+            return GetFailedInstances(ruleInstances, failureLevel).SelectMany(
                 ruleInstance => ruleInstance.GetFields().Select(
                     field => ruleInstance.RuleDefinition.DocumentTypeID + "." + field
                 )
@@ -50,8 +100,8 @@ namespace Impower.DocumentUnderstanding.Extensions
         public static IEnumerable<RuleDefinition> DeserializeRuleDefinitionsFromString(string jsonString)
         {
             //TODO: In massive need of refactor, this implementation is just the easiest way I could think to do it under time-constraints.
-            //These few lines reduces the need to use the full name in rule definition json files.
-            var types = new[] { typeof(LambdaRuleDefinition), typeof(ThresholdRuleDefinition) };
+            //These few lines eliminate the need to use the full name in rule definition json files.
+            var types = new[] { typeof(LambdaRuleDefinition), typeof(ThresholdRuleDefinition), typeof(VinValidationRuleDefinition)};
             foreach(Type type in types)
             {
                 jsonString = jsonString.Replace(
