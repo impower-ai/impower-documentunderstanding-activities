@@ -74,6 +74,8 @@ namespace Impower.DocumentUnderstanding.Validation
             properties = values.Select(
                 jToken => jToken as JObject
             ).Where(
+                jObject => jObject.ContainsKey("Variable")
+            ).Where(
                 jObject => VinQueryFilter.Contains(jObject["Variable"].ToString())
             ).ToDictionary(
                 jObject => jObject["Variable"].ToString(),

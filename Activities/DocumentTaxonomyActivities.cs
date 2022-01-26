@@ -38,6 +38,8 @@ namespace Impower.DocumentUnderstanding
             foreach (DocumentType documentType in documentTypes)
             {
                 documentType.Fields = documentType.Fields.Where(
+                    field => !string.IsNullOrEmpty(field.FieldId)
+                ).Where(
                     field => filterFields.Contains(field.FieldId)
                 ).ToArray();
             }
