@@ -48,6 +48,12 @@ namespace Impower.DocumentUnderstanding.Extensions
         }
         public static object GetDataPointValue(ResultsDataPoint dataPoint)
         {
+            //TODO: what to do in this case?
+            if (!dataPoint.Values.Any())
+            {
+                return "";
+            }
+
             var value = dataPoint.Values[0].Value;
             try
             {
