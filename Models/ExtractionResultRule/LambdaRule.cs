@@ -21,14 +21,17 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
     {
         internal static LambdaParser Parser = new LambdaParser();
         internal Nullable<bool> LambdaResult;
-        internal new LambdaRuleDefinition RuleDefinition;
+        internal LambdaRuleDefinition RuleDefinition;
         private Dictionary<string, object> lambdaContext;
         public LambdaRuleInstance(ExtractionResult extractionResult, LambdaRuleDefinition ruleDefinition)
         {
             this.RuleDefinition = ruleDefinition;
             this.ExtractionResult = extractionResult;
         }
-
+        public override RuleDefinition GetRuleDefinition()
+        {
+            return this.RuleDefinition;
+        }
         public override string[] GetFailedFields()
         {
             if (!LambdaResult.HasValue) this.EvaluateRule();

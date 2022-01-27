@@ -9,16 +9,14 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
 
         public abstract RuleInstance GetRuleInstance(ExtractionResult extractionResult);
     }
-    public abstract class RuleInstance
-    {
+    public abstract class RuleInstance { 
         internal RuleInstanceEvaluation Evaluation;
         internal ExtractionResult ExtractionResult;
-        internal RuleDefinition RuleDefinition;
         public FailureLevel GetEvaluatedFailureLevel()
         {
             return this.GetEvaluation().FailureLevel;
         }
-
+        public abstract RuleDefinition GetRuleDefinition();
         public abstract string[] GetFailedFields();
 
         public abstract string[] GetFields();

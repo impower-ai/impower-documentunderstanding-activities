@@ -12,7 +12,7 @@ namespace Impower.DocumentUnderstanding.Tests
     [TestFixture]
     internal class ValidateAndCleanVIN_
     {
-        private ValidateAndCleanVIN activity = new ValidateAndCleanVIN();
+        private readonly ValidateAndCleanVIN activity = new ValidateAndCleanVIN();
         [TestCase("1FADP3F26DLI235O0")]
         [TestCase("4T1BF1FK6EU333627")]
         [TestCase("IC6RR6NT6ES385781")]

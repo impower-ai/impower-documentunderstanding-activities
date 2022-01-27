@@ -17,12 +17,16 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
     }
     public class VinValidationRuleInstance : RuleInstance
     {
-        internal new VinValidationRuleDefinition RuleDefinition;
-        private List<string> FailedFields = new List<string>();
+        internal VinValidationRuleDefinition RuleDefinition;
+        private readonly List<string> FailedFields = new List<string>();
         public VinValidationRuleInstance(ExtractionResult extractionResult, VinValidationRuleDefinition ruleDefinition)
         {
             this.ExtractionResult = extractionResult;
             this.RuleDefinition = ruleDefinition;
+        }
+        public override RuleDefinition GetRuleDefinition()
+        {
+            return this.RuleDefinition;
         }
         public override string[] GetFailedFields()
         {
