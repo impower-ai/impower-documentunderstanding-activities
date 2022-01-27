@@ -18,15 +18,18 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
     }
     public class ThresholdRule : RuleInstance
     {
-        internal new ThresholdRuleDefinition RuleDefinition;
-        private List<string> FailedFields = new List<string>();
+        internal ThresholdRuleDefinition RuleDefinition;
+        private readonly List<string> FailedFields = new List<string>();
 
         public ThresholdRule(ExtractionResult extractionResult, ThresholdRuleDefinition ruleDefinition)
         {
             this.ExtractionResult = extractionResult;
             this.RuleDefinition = ruleDefinition;
         }
-
+        public override RuleDefinition GetRuleDefinition()
+        {
+            return this.RuleDefinition;
+        }
         public override string[] GetFailedFields()
         {
             if (this.Evaluation is null) this.EvaluateRule();

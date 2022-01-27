@@ -21,7 +21,7 @@ namespace Impower.DocumentUnderstanding.Validation
 
     internal static class ValidationExtensions
     {
-        private static Regex vinRegex = new Regex(@"[^A-HJ-NPR-Za-hj-npr-z\d]");
+        private static readonly Regex vinRegex = new Regex(@"[^A-HJ-NPR-Za-hj-npr-z\d]");
         public static readonly string[] VinQueryFilter = {
                 "Error Code",
                 "Error Text",
@@ -111,10 +111,9 @@ namespace Impower.DocumentUnderstanding.Validation
         public OutArgument<bool> Valid { get; set; }
         protected override void Execute(CodeActivityContext context)
         {
-            Dictionary<string, string> properties;
             string sanitizedVin = VIN.Get(context).ToUpper();
             bool fixOcr = FixOCR.Get(context);
-            bool valid = ValidationExtensions.ValidateVinWithNHTSA( ref sanitizedVin, out properties, fixOcr);
+            bool valid = ValidationExtensions.ValidateVinWithNHTSA( ref sanitizedVin, out Dictionary<string, string> properties, fixOcr);
             VIN.Set(context, sanitizedVin);
             Properties.Set(context, properties);
             Valid.Set(context, valid);

@@ -25,6 +25,8 @@ namespace Impower.DocumentUnderstanding.Rules
         [DisplayName("Valid?")]
         [Category("Output")]
         public OutArgument<bool> Valid { get; set; }
+
+        public OutArgument<Dictionary<string,string>> Properties { get; set; }
         protected override void Execute(CodeActivityContext context)
         {
             ExtractionResult result = ExtractionResult.Get(context);
@@ -38,6 +40,7 @@ namespace Impower.DocumentUnderstanding.Rules
             }
             Valid.Set(context, valid);
             ExtractionResult.Set(context, result);
+            Properties.Set(context, properties);
         }
     }
     [DisplayName("Run Rule Set On Extraction Result")]

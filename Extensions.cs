@@ -27,7 +27,7 @@ namespace Impower.DocumentUnderstanding.Extensions
                 throw new InvalidRuleException($"Could not find field '{fieldId}' in extraction result.");
             }
         }
-        private static string DecimalRegexString = @"[^0-9.]";
+        private static readonly string DecimalRegexString = @"[^0-9.]";
         public static void UpdateDataPointValue(string value, string fieldId, ExtractionResult result)
         {
             var matchingField = result.ResultsDocument.Fields.Where(field => field.FieldId == fieldId).Single();
@@ -90,15 +90,15 @@ namespace Impower.DocumentUnderstanding.Extensions
         {
             return GetFailedInstances(ruleInstances, failureLevel).SelectMany(
                 ruleInstance => ruleInstance.GetFields().Select(
-                    field => ruleInstance.RuleDefinition.DocumentTypeID + "." + field
+                    field => ruleInstance.GetRuleDefinition().DocumentTypeID + "." + field
                 )
-            );
+            ).ToList();
         }
 
         public static IEnumerable<string> GetFailedFieldExplanations(IEnumerable<RuleInstance> ruleInstances, FailureLevel failureLevel)
         {
             return ruleInstances.Where(
-                ruleInstance => ruleInstance.RuleDefinition.FailureLevel >= failureLevel
+                ruleInstance => ruleInstance.GetRuleDefinition().FailureLevel >= failureLevel
             ).Select(
                 ruleInstance => ruleInstance.ResultMessage()
             );

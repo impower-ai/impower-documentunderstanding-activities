@@ -14,10 +14,10 @@ namespace Impower.DocumentUnderstanding.Tests
     internal class MergeExtractionResults_
     {
         private string documentTypeId;
-        private string documentID = Guid.NewGuid().ToString();
+        private readonly string documentID = Guid.NewGuid().ToString();
         private ExtractionResult result1;
         private ExtractionResult result2;
-        private MergeExtractionResults activity = new MergeExtractionResults();
+        private readonly MergeExtractionResults activity = new MergeExtractionResults();
 
         [SetUp]
         public void Setup()

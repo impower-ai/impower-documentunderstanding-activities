@@ -15,7 +15,7 @@ namespace Impower.DocumentUnderstanding.Tests
         private string documentTypeId;
         private DocumentTaxonomy inputTaxonomy;
         private DocumentTaxonomy outputTaxonomy; 
-        private FilterTaxonomyByFieldIds activity = new FilterTaxonomyByFieldIds();
+        private readonly FilterTaxonomyByFieldIds activity = new FilterTaxonomyByFieldIds();
 
         [SetUp]
         public void Setup()
