@@ -99,6 +99,7 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
             }
             catch (Exception e)
             {
+                this.exception = e;
                 this.LambdaResult = false;
             }
 
