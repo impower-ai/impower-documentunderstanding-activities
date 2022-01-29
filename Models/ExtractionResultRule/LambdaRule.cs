@@ -23,6 +23,7 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
         internal Nullable<bool> LambdaResult;
         internal LambdaRuleDefinition RuleDefinition;
         private Dictionary<string, object> lambdaContext;
+        private Exception exception;
         public LambdaRuleInstance(ExtractionResult extractionResult, LambdaRuleDefinition ruleDefinition)
         {
             this.RuleDefinition = ruleDefinition;
@@ -52,13 +53,25 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
         public override string ResultMessage()
         {
             if (!this.LambdaResult.HasValue) this.EvaluateRule();
-            return String.Format(
-                "[{0}] The following expression: \"{1}\" evaluated to {2} with inputs of {3}",
+            if (this.exception != null)
+            {
+                return String.Format(
+                "[{0}] The following expression \"{1}\" could not be understood due to the following error - {2}",
                 this.RuleDefinition.DocumentTypeID,
                 this.RuleDefinition.Expression,
-                this.LambdaResult.Value,
-                JsonConvert.SerializeObject(this.lambdaContext)
-            );
+                this.exception.Message
+                );
+            }
+            else
+            {
+                return String.Format(
+                    "[{0}] The following expression: \"{1}\" evaluated to {2} with inputs of {3}",
+                    this.RuleDefinition.DocumentTypeID,
+                    this.RuleDefinition.Expression,
+                    this.LambdaResult.Value,
+                    JsonConvert.SerializeObject(this.lambdaContext)
+                );
+            }
         }
 
         public override string RuleExplanation()
@@ -71,20 +84,28 @@ namespace Impower.DocumentUnderstanding.Models.ExtractionResults
         }
         internal override void EvaluateRule()
         {
-            lambdaContext = new Dictionary<string, object>();
-            foreach (KeyValuePair<string, string> reference in this.RuleDefinition.Fields)
+            try
             {
-                ResultsDataPoint data = ExtractionResultRuleExtensions.GetDataPointByFieldId(
-                    $"{this.RuleDefinition.DocumentTypeID}.{reference.Value}",
-                    this.ExtractionResult
-                );
-                lambdaContext[reference.Key] = ExtractionResultRuleExtensions.GetDataPointValue(data);
+                lambdaContext = new Dictionary<string, object>();
+                foreach (KeyValuePair<string, string> reference in this.RuleDefinition.Fields)
+                {
+                    ResultsDataPoint data = ExtractionResultRuleExtensions.GetDataPointByFieldId(
+                        $"{this.RuleDefinition.DocumentTypeID}.{reference.Value}",
+                        this.ExtractionResult
+                    );
+                    lambdaContext[reference.Key] = ExtractionResultRuleExtensions.GetDataPointValue(data);
+                }
+                this.LambdaResult = (bool)Parser.Eval(this.RuleDefinition.Expression, lambdaContext);
             }
-            this.LambdaResult = (bool)Parser.Eval(this.RuleDefinition.Expression, lambdaContext);
+            catch (Exception e)
+            {
+                this.LambdaResult = false;
+            }
+
             this.Evaluation = new RuleInstanceEvaluation(
-                this.LambdaResult.Value ? FailureLevel.None : this.RuleDefinition.FailureLevel,
-                this
-            );
+                    this.LambdaResult.Value ? FailureLevel.None : this.RuleDefinition.FailureLevel,
+                    this
+                );
         }
     }
 }
